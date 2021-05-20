@@ -1,24 +1,37 @@
 <template>
-  <div id="app" class="app">
+  <div
+    id="app"
+    :class="
+      typeof weather.main != 'undefined' && weather.main.temp > 16 ? 'warm' : ''
+    "
+  >
     <main>
       <!-- Search Box -->
       <div class="search-box">
-        <input class="search-bar" type="text" placeholder="Search..." />
+        <input
+          class="search-bar"
+          type="text"
+          placeholder="Search..."
+          v-model="query"
+          @keypress="fetchWeather"
+        />
       </div>
       <!-- End of Search Box -->
 
       <!-- Weather wrap -->
-      <div class="weather-wrap">
+      <div class="weather-wrap" v-if="typeof weather.main != 'undefined'">
         <div class="location-box">
-          <div class="location">Cairo, Egypt</div>
-          <div class="date">Monday 20 January 2020</div>
+          <div class="location">
+            {{ weather.name }}, {{ weather.sys.country }}
+          </div>
+          <div class="date">{{ dateBuilder() }}</div>
         </div>
         <div class="weather-box">
           <div class="temp">
-            <h1>9°C</h1>
+            <h1>{{ Math.round(weather.main.temp) }}°C</h1>
           </div>
           <div class="weather">
-            <span>Rain</span>
+            <span>{{ weather.weather[0].main }}</span>
           </div>
         </div>
       </div>
@@ -39,6 +52,53 @@ export default {
       weather: {},
     };
   },
+  methods: {
+    fetchWeather(e) {
+      if (e.key == "Enter") {
+        fetch(
+          `${this.url_base}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
+        )
+          .then((response) => {
+            return response.json();
+          })
+          .then(this.setResult);
+      }
+    },
+    setResult(results) {
+      this.weather = results;
+    },
+    dateBuilder() {
+      let d = new Date();
+      let months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      let days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      let day = days[d.getDay()];
+      let date = d.getDate();
+      let month = months[d.getMonth()];
+      let year = d.getFullYear();
+      return `${day} ${date} ${month} ${year}`;
+    },
+  },
 };
 </script>
 
@@ -53,11 +113,15 @@ body {
   font-family: "Montserrat", sans-serif;
 }
 
-.app {
+#app {
   background-image: url("./assets/images/cloud-bg.jpeg");
   background-size: cover;
   background-position: bottom;
   transition: 0.4s;
+}
+
+#app.warm {
+  background-image: url("./assets/images/warm.bg.jpeg");
 }
 
 main {
